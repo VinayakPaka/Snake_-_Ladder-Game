@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Board {
     private final int size; // N x N
-    private final int lastIndex; // N*N - 1
+    private final int lastIndex; // N*N - 1 (zero-based)
     private final Map<Integer, Snake> snakesByHead;
     private final Map<Integer, Ladder> laddersByStart;
 
@@ -51,6 +51,11 @@ public class Board {
 
     public int getLastIndex() {
         return lastIndex;
+    }
+
+    // Convert zero-based cell index to human-friendly 1-based label
+    public int toHumanCellNumber(int zeroBasedIndex) {
+        return zeroBasedIndex + 1;
     }
 
     public Optional<Snake> getSnakeAt(int index) {

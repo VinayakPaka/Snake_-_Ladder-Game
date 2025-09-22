@@ -84,6 +84,10 @@ public class GameEngine {
                 handleKillIfAny(current);
                 if (outcome.won) {
                     System.out.println("\nWinner: " + current.getName());
+                    if (renderer != null) {
+                        System.out.println("Final board:");
+                        renderer.render(board, players);
+                    }
                     won = true;
                     break;
                 }

@@ -5,16 +5,19 @@ Run a console-based Snakes and Ladders game with:
 - Variable number of players
 - Difficulty levels (easy, medium, hard) that change counts of snakes and ladders
 - Rules: extra roll on 6, three 6s in a row revokes the turn, kill rule when landing on another player
+- Live board rendering with symbols/emojis: 🐍 for snake heads, ⬆ for ladder starts, colorful tokens for players, and a legend after every move
+  - Numbering matches classic boards: bottom-left starts at 1 and increases upward with serpentine rows (see example below)
 
 ### How to run
 
-1. Compile:
+1. Compile (PowerShell, UTF-8 for emoji support):
 ```
-javac -d out src/main/java/com/game/snakesladder/**/*.java
+cd "C:\Users\Vinayak Paka\Desktop\LLD_22"
+javac -encoding UTF-8 -d out (Get-ChildItem -Recurse -Filter *.java | % FullName)
 ```
 2. Run:
 ```
-java -cp out com.game.snakesladder.Main
+java "-Dfile.encoding=UTF-8" -cp out com.game.snakesladder.Main
 ```
 
 ### Inputs (prompted by CLI)
@@ -30,12 +33,94 @@ java -cp out com.game.snakesladder.Main
 - Landing on an occupied cell "kills" the other player, sending them back to start (cell 0).
 - Exact finish: moves that overshoot the last cell are ignored for that roll; you must land exactly on the last cell to win.
 
+### Board Rendering
+- Before and after every move, the current board is printed in a serpentine layout.
+- Symbols:
+  - 🐍 marks snake heads; a legend shows head→tail pairs.
+  - ⬆ marks ladder starts; a legend shows start→end pairs.
+  - Players are shown as colorful tokens (🔴 🔵 ⚪ ⚫ 🔶 🔷 🔸 🔹). Each player also appears in a legend with their name and exact index.
+- Cells are widened and centered for readability.
+- Numbering: bottom-left is 1; rows alternate left→right then right→left and increase upward, e.g. for a 10×10 board:
+
+| 100 | 99 | 98 | 97 | 96 | 95 | 94 | 93 | 92 | 91 |
+| --- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| 81  | 82 | 83 | 84 | 85 | 86 | 87 | 88 | 89 | 90 |
+| 80  | 79 | 78 | 77 | 76 | 75 | 74 | 73 | 72 | 71 |
+| 61  | 62 | 63 | 64 | 65 | 66 | 67 | 68 | 69 | 70 |
+| 60  | 59 | 58 | 57 | 56 | 55 | 54 | 53 | 52 | 51 |
+| 41  | 42 | 43 | 44 | 45 | 46 | 47 | 48 | 49 | 50 |
+| 40  | 39 | 38 | 37 | 36 | 35 | 34 | 33 | 32 | 31 |
+| 21  | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+| 20  | 19 | 18 | 17 | 16 | 15 | 14 | 13 | 12 | 11 |
+| 1   | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 |
+
 ### Design Overview (SOLID + Patterns)
 - Strategy Pattern: `DifficultyStrategy` determines counts and placement constraints for snakes/ladders.
 - Factory: `BoardFactory` builds a `Board` using a chosen strategy.
 - Single Responsibility: Each class focuses on a single concern (board model, dice, rules, engine, CLI).
 - Open/Closed: New difficulty strategies or dice variations can be added without modifying existing classes.
 - Liskov, Interface Segregation, Dependency Inversion: Interfaces for dice and difficulty; engine depends on abstractions.
+
+### UML Diagram
+```mermaid
+classDiagram
+    direction LR
+
+    class Main
+
+    class GameEngine {
+        -Board board
+        -List~Player~ players
+        -Die die
+        -RulesEngine rulesEngine
+        -BoardRenderer renderer
+        +playInteractive(scanner)
+    }
+
+    class BoardFactory {
+        +create(size) Board
+    }
+
+    class Board {
+        -int size
+        -List~Snake~ snakes
+        -List~Ladder~ ladders
+        +addSnake(Snake)
+        +addLadder(Ladder)
+        +getSize() int
+        +getNewPosition(int) int
+    }
+
+    class Player {
+        -String name
+        -int position
+        +getName() String
+        +getPosition() int
+        +setPosition(int)
+        +moveBy(int)
+    }
+
+    class Snake { -int head; -int tail }
+    class Ladder { -int start; -int end }
+
+    class Die { <<interface>> +roll() int }
+    class StandardDie { +roll() int }
+
+    class RulesEngine { +applyTurn(start, rolls) TurnOutcome }
+    class TurnOutcome { +finalPosition int; +getsExtraTurn bool; +turnRevoked bool; +won bool }
+
+    Main --> GameEngine : uses
+    GameEngine --> Board : composition
+    GameEngine --> Player : aggregation
+    GameEngine ..> Die : dependency
+    GameEngine ..> RulesEngine : dependency
+    GameEngine ..> BoardRenderer : dependency
+    BoardFactory ..> Board : creates
+    Board o--> Snake : composition
+    Board o--> Ladder : composition
+    StandardDie ..|> Die
+    ConsoleBoardRenderer ..|> BoardRenderer
+```
 
 ## Snake and Ladder (Java) — Low Level Design
 
